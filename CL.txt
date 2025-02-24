@@ -1,0 +1,11 @@
+Using extract route:
+
+Invoke-WebRequest -Uri http://127.0.0.1:5000/api/extract -Method Post -ContentType "application/json" -Body '{"urls": ["https://spacewars.fandom.com/wiki/Space_Wars_Wiki"]"}' -UseBasicParsing
+
+using ask route:
+
+Invoke-WebRequest -Uri http://127.0.0.1:5000/api/ask -Method Post -ContentType "application/json" -Body '{"prompt": "Im testing this ask functionality, say hi!"}' -UseBasicParsing
+
+using combined route:
+
+Invoke-WebRequest -Uri http://127.0.0.1:5000/api/extract -Method Post -ContentType "application/json" -Body '{"urls": ["https://spacewars.fandom.com/wiki/Space_Wars_Wiki"]", "prompt": "What is the website from the link attatched about?"}' -UseBasicParsing
