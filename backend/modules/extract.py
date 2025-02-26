@@ -1,8 +1,6 @@
-from flask import Flask, request, jsonify, Blueprint
+from flask import request, jsonify
 import requests
 from bs4 import BeautifulSoup
-import google.generativeai as genai
-from dotenv import load_dotenv
 
 def register_extract_routes(app):
     @app.route('/api/extract', methods=['POST'])

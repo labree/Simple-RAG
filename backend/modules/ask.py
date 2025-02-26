@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import request, jsonify
 import requests
 from bs4 import BeautifulSoup
 import google.generativeai as genai
@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-
+#client = genai.Client(api_key="GEMINI_API_KEY")
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 def register_ask_routes(app):
@@ -17,42 +17,37 @@ def register_ask_routes(app):
 
         # Create a chat model instance
         model = genai.GenerativeModel('gemini-1.5-flash')
-        chat = model.start_chat(history=[])
 
-        # Send the prompt to Gemini and get a response
-        response = chat.send_message(prompt)
+        response = model.generate_content(prompt)
 
         return jsonify({'response': response.text})
 
-    @app.route('/api/ask-context', methods=['POST'])   
+    @app.route('/api/ask-context', methods=['POST'])
     def ask_gemini_with_context():
         data = request.json
         prompt = data.get('prompt', '')
         urls = data.get('urls', [])
 
-        content = ["The folliwng text are taken from various websites and will serve as context for the following conversation"]
+        content = ["The following text are taken from various websites and will serve as context for the following conversation:"]
         for url in urls:
-            response = requests.get(url)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            text = soup.get_text()
-            content.append(text)
-        content = " ".join(content)
-        context = content
-        
-        # Create a chat model instance
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        chat = model.start_chat(history=[
-            {
-                "role": "user",
-                "parts": [{"text": context}]
-            },
-            {
-                "role": "model",
-                "parts": [{"text": "Understood."}]
-            }
-        ])
+            try:
+                response = requests.get(url)
+                response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+                soup = BeautifulSoup(response.text, 'html.parser')
+                text = soup.get_text()
+                content.append(text)
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching URL {url}: {e}")
+                content.append(f"Error retrieving content from {url}.")
+            except Exception as e:
+                print(f"Error processing URL {url}: {e}")
+                content.append(f"Error processing content from {url}.")
 
-        # Send the prompt to Gemini and get a response
-        response = chat.send_message(prompt)
+        context = " ".join(content)
+
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(
+            [context, prompt]
+        )
 
         return jsonify({'response': response.text})
